@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class GlucoseDataMeasurementServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(GlucoseDataMeasurementServiceApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(GlucoseDataMeasurementServiceApplication.class, args);
+    }
 
 }
