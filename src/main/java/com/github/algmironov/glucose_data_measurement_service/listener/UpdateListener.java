@@ -1,5 +1,9 @@
 package com.github.algmironov.glucose_data_measurement_service.listener;
 
+import com.github.algmironov.glucose_data_measurement_service.constants.ButtonsAndTexts;
+import com.github.algmironov.glucose_data_measurement_service.service.RecordService;
+import com.github.algmironov.glucose_data_measurement_service.service.ResponseDealer;
+import com.github.algmironov.glucose_data_measurement_service.service.UserService;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Message;
@@ -12,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import static com.github.algmironov.glucose_data_measurement_service.constants.ButtonsAndTexts.*;
 
 @Service
 public class UpdateListener implements UpdatesListener {
@@ -20,9 +25,23 @@ public class UpdateListener implements UpdatesListener {
 
     private final TelegramBot telegramBot;
 
-    public UpdateListener(TelegramBot telegramBot) {
+    private final UserService userService;
+
+    private final RecordService recordService;
+
+    private final ResponseDealer responseDealer;
+
+
+    public UpdateListener(TelegramBot telegramBot,
+                          RecordService recordService,
+                          UserService userService,
+                          ResponseDealer responseDealer) {
         this.telegramBot = telegramBot;
+        this.recordService = recordService;
+        this.userService = userService;
+        this.responseDealer = responseDealer;
     }
+
 
     @PostConstruct
     public void init() {
@@ -34,10 +53,14 @@ public class UpdateListener implements UpdatesListener {
         updates.forEach(update -> {
             logger.info("====Processing update: {}", update);
             Message message = getMessage(update);
-            User user = getUserFromMessage(message);
+            User currentUser = getUserFromMessage(message);
+            checkUserInDatabase(currentUser);
             if (startCommandChecker(update)) {
-                telegramBot.execute(new SendMessage(message.from().id(), "Hello!"));
+                logger.info("==== Answering to user with Welcome message and Main menu");
+                responseDealer.responseMaker(update, WELCOME_MESSAGE, mainMenuList);
+
             }
+
 
 
         });
@@ -61,5 +84,11 @@ public class UpdateListener implements UpdatesListener {
 
     private boolean startCommandChecker(Update update) {
         return getMessage(update).text().equals("/start");
+    }
+
+    private void checkUserInDatabase(User user) {
+        if (!userService.checkUserInDataBase(user)) {
+            userService.saveTgUser(user);
+        }
     }
 }
